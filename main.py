@@ -11,6 +11,7 @@ def get_status(request):
     return json({"server": "ON"})
 
 
+
 # add views
 from classviews.geography_views import CountryView
 
