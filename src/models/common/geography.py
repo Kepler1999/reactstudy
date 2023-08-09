@@ -5,7 +5,7 @@ from pony.orm import *
 
 class Country(db.Entity):
     id = PrimaryKey(str, default=get_id())
-    name_chs = Optional(str)
+    name_chs = Optional(str, unique=True, index=True)
     name_eng = Optional(str)
     fullname_eng = Optional(str)
     alphabetic_abbr_2 = Optional(str)
@@ -17,7 +17,7 @@ class Country(db.Entity):
 
 class ProvinceState(db.Entity):
     id = PrimaryKey(str, default=get_id())
-    name_chs = Optional(str)
+    name_chs = Optional(str, unique=True, index=True)
     name_eng = Optional(str)
     chs_abbr = Optional(str)
     alphabetic_abbr = Optional(str)
@@ -29,7 +29,7 @@ class ProvinceState(db.Entity):
 
 class City(db.Entity):
     id = PrimaryKey(str, default=get_id())
-    name_chs = Optional(str)
+    name_chs = Optional(str, unique=True, index=True)
     name_eng = Optional(str)
     chs_abbr = Optional(str)
     alphabetic_abbr = Optional(str)
