@@ -15,7 +15,7 @@ def get_status(request):
 # add views
 from classviews.geography_views import CountryView
 
-app.add_route(CountryView.as_view(), "/geography/country/")
+app.add_route(CountryView.as_view(), "/common/geography/country/")
 
 
 

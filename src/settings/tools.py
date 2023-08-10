@@ -1,6 +1,11 @@
 import secrets
 import time
 
+def str_is_NoneOrEmpty(s: str)-> bool:
+    if s is None or len(str(s)) <= 0:
+        return True
+    else:
+        return False
 
 def get_id():
     return str(secrets.token_hex(16))

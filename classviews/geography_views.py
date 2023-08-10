@@ -97,3 +97,50 @@ class CountryView(HTTPMethodView):
         ret['data']=c.to_dict()
         
         return json(REQUEST_SUCCESS)
+    
+    
+    @db_session
+    def put(self, request) -> json:
+        id = request.args.get("id")
+        # if object has not existing
+        c = Country.get(id=id)
+        if c is None:
+            return json(NOT_FOUND_RESULT)
+        
+        name_chs = request.args.get("name_chs")
+        name_eng = request.args.get("name_eng")
+        fullname_eng = request.args.get("fullname_eng")
+        alphabetic_abbr_2 = request.args.get("alphabetic_abbr_2")
+        alphabetic_abbr_3 = request.args.get("alphabetic_abbr_3")
+        desc = request.args.get("desc")
+
+        if name_chs is not None:
+            c.name_chs = name_chs
+        if name_eng is not None:
+            c.name_eng = name_eng 
+        if fullname_eng is not None:
+            c.fullname_eng = fullname_eng 
+        if alphabetic_abbr_2 is not None:
+            c.alphabetic_abbr_2 = alphabetic_abbr_2 
+        if alphabetic_abbr_3 is not None:
+            c.alphabetic_abbr_3 = alphabetic_abbr_3 
+        if desc is not None:
+            c.desc = desc
+        
+        ret = REQUEST_SUCCESS
+        ret['data']=c.to_dict()
+        
+        return json(REQUEST_SUCCESS)
+
+    
+    @db_session
+    def delete(self, request) -> json:
+        id = request.args.get("id")
+        # if object has not existing
+        c = Country.get(id=id)
+        if c is None:
+            return json(NOT_FOUND_RESULT)
+        
+        c.delete()
+        return json(REQUEST_SUCCESS)
+        
