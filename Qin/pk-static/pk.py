@@ -83,16 +83,26 @@ def get_order_amout() -> int:
 from pony.orm import *
 
 db = Database()
-# db.bind(provider="sqlite", filename="pk.sqlite", create_db=True)
+# db.bind(provider="sqlite", filename=r"C:\Users\liang\Desktop\Repo\pk.sqlite", create_db=True)
 # db.bind(provider='postgres', user='', password='', host='', database='')
 db.bind(provider='mysql', host='120.46.203.252', user='root', passwd='tang0829', port=3306, db='pktml')
-
+# db.bind(provider='mysql', host='172.17.1.120',port=6020, user='testpaike', passwd='ZRygXrZMX2Xchtj',db='testpaike')
+# db.bind(provider='mysql', host='rm-cn-nwy3cr6r4000yfco.rwlb.rds.aliyuncs.com',port=3306, user='xysjn', passwd='Sjn199@166',db='db2023')
 
 class School(db.Entity):
     _table_ = "tml_school"
     id = PrimaryKey(str)
     name = Optional(str)  # 学校名称
-    type = Optional(int)  # 学校类型
+    type = Optional(int)  # 学校类型 
+    #                                 <option value="-1" selected="selected">选择学校类型</option>
+    #                                 <option value="0">小学</option>
+    #                                 <option value="1">初中</option>
+    #                                 <option value="2">高中</option>
+    #                                 <option value="3">完全中学</option>
+    #                                 <option value="4">大学</option>
+    #                                 <option value="5">培训机构</option>
+    #                                 <option value="6">竞品公司</option>
+    #                                 <option value="7">其他</option>
     area = Optional(str)  # 所在地区
     is_test = Required(bool, default=False)
     users = Set("User")
@@ -189,7 +199,7 @@ def sync_user_data():
         user_data = user_data["data"]["list"]
 
         # school data handle
-        for usr in user_data:
+        for usr in tqdm(user_data):
             # print(f"::{usr}")
             if usr["schoolId"] is None:
                 data.append(usr)
@@ -221,6 +231,7 @@ def sync_user_data():
                     else ""
                 )
 
+                user.source = ""
                 user.school = school
             else:
                 if str(usr["lastUpdatedTime"]) not in user.active.active_at:
@@ -317,7 +328,7 @@ def sync_data_collection():
     day = date(2023, 8, 1)
 
     while True:
-        if day >= date.today() - timedelta(days=1):
+        if day >= date.today():
             break
 
         print(f"{get_localtime_std(datetime.now())}::Collect {day} data ...")
@@ -442,13 +453,14 @@ def check_collection(start: str, end: str):
 
 @db_session
 def test():
-    # a = select(s for s in School if "销售" in s.name)
+    a = select(s for s in School if s.is_test==False and "试用" in s.name )
     # a = select(s for s in School if s.is_test == True)
-    a = select(s for s in Activity if s.active_at > str(1692114980000))
+    # a = select(s for s in Activity if s.active_at > str(1692114980000))
 
     print(len(a[:]))
-    # for x in a:
-    #     print(x.active_at,x.user)
+    for x in a:
+        x.is_test = True
+        print(x.name,x.is_test)
     # x.is_test = True
     # a = select(u.active for u in User)
     # print([x.active_at for x in a[:10]])
@@ -521,3 +533,4 @@ if __name__ == "__main__":
 
     sync()
     collect()
+    

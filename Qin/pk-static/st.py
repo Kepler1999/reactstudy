@@ -4,23 +4,31 @@ from pony.orm import *
 
 from pk import db, School, User, Activity, Order, Collection, check_collection
 
-from tools import date2stamp, get_rate_of_chage, float2percentage
+from tools import date2stamp, get_rate_of_chage, float2percentage,stamp2data1000,your_float
+
+from statistics import mean,pstdev
 
 from datetime import date, datetime, timedelta
+import calendar
 
 
-stand_date = date.today() - timedelta(days=2)
+stand_date = date.today() - timedelta(days=1)
 
+# config 
+st.set_page_config(page_title="排课应用数据一览",layout="wide",page_icon="https://icons.getbootstrap.com/assets/icons/laptop.svg")
 
 # head
 
 st.title("PK-app Data Tracking")
-st.write(f"统计周期：2022-01-01~{stand_date}, 每日2:00am 更新数据")
+st.text(f"统计周期：2022-01-01~{stand_date}, 每日2:00am 更新数据")
+st.image("https://icons.getbootstrap.com/assets/icons/info-circle.svg")
 st.write(f"1.当日，指{stand_date}，近15日、今年同期的截止日期均为此；")
-st.write("2.由于原数据库用户活跃记录错误，{stand_date}之前的日活用户仅供参考.")
-st.write("3.数据仅包含线上支付的订单、营收等数据，线下签订合同银行转账的记录无法纳入。")
+st.write("2.由于原数据库用户活跃记录错误，2023-09-01 之前的活跃用户数据仅供参考;")
+st.write("3.数据仅包含线上支付的订单、营收等数据，线下签订合同银行转账的记录暂无。")
 st.write("")
 
+# st.button("clear all cache", on_click=st.cache_data.clear())
+    
 # region date define
 
 # today & lastyear_today
@@ -38,6 +46,20 @@ last_year_today_e = date2stamp(
     )
 )
 
+# 7days
+day_7 = today - timedelta(days=7)
+day_7_s = date2stamp(datetime(day_7.year, day_7.month, day_7.day, 0, 0, 0))
+day_7_e = today_e
+
+last_year_day_7 = day_7 - timedelta(days=365)
+last_year_day_7_s = date2stamp(
+    datetime(
+        last_year_day_7.year, last_year_day_7.month, last_year_day_7.day, 0, 0, 0
+    )
+)
+last_year_day_7_e = last_year_today_e
+
+
 # 15days
 day_15 = today - timedelta(days=15)
 day_15_s = date2stamp(datetime(day_15.year, day_15.month, day_15.day, 0, 0, 0))
@@ -50,6 +72,22 @@ last_year_day_15_s = date2stamp(
     )
 )
 last_year_day_15_e = last_year_today_e
+
+
+# this month span
+# this_month = date(today.year,today.mo) today - timedelta(days=15)
+this_month_s = date2stamp(datetime(today.year, today.month, 1, 0, 0, 0))
+this_month_e = today_e
+
+# last_year_this_month = day_15 - timedelta(days=365)
+last_year_this_month_s = date2stamp(
+    datetime(
+        last_year_today.year, last_year_today.month, 1, 0, 0, 0
+    )
+)
+last_year_this_month_e = last_year_today_e
+
+
 
 # this year span
 this_year_s = date2stamp(datetime(today.year, 1, 1, 0, 0, 0))
@@ -67,7 +105,7 @@ last_whole_year_e = date2stamp(datetime(last_year_today.year, 12, 31, 23, 59, 59
 
 @st.cache_data
 @db_session
-def get_specified_start_end_data():
+def get_specific_datespan_data():
     data = {}
 
     # today & last year today
@@ -76,6 +114,13 @@ def get_specified_start_end_data():
 
     data["today"] = d_today
     data["last_year_today"] = d_last_year_today
+    
+    # 7days
+    d_7_day = check_collection(day_7_s,day_7_e)
+    d_last_year_7_day = check_collection(last_year_day_7_s,last_year_day_7_e)
+    
+    data["7day"] = d_7_day
+    data["last_year_7day"] = d_last_year_7_day
 
     # 15days
     d_15_day = check_collection(day_15_s, day_15_e)
@@ -83,6 +128,13 @@ def get_specified_start_end_data():
 
     data["15day"] = d_15_day
     data["last_year_15day"] = d_last_year_15_day
+    
+    # month span
+    d_this_month = check_collection(this_month_s,this_month_e)
+    d_last_year_this_month = check_collection(last_year_this_month_s,last_year_this_month_e)
+    
+    data["thismonth"] = d_this_month
+    data["last_year_thismonth"] = d_last_year_this_month
 
     # this year span
     d_this_year = check_collection(this_year_s, this_year_e)
@@ -103,8 +155,10 @@ def get_specified_start_end_data():
 
 st.subheader("总览")
 
+st.text("Tips:同比变化,百分比数据，对比去年同期的数值增长率。")
+
 # region
-compared_data = get_specified_start_end_data()
+compared_data = get_specific_datespan_data()
 
 # income data
 income_today = compared_data["today"]["income"]
@@ -115,6 +169,12 @@ income_today_ly = compared_data["last_year_today"]["income"]
 income_15_days_ly = compared_data["last_year_15day"]["income"]
 income_last_year = compared_data["lastyear"]["income"]
 income_last_whole_year = compared_data["lastwholeyear"]["income"]
+
+income_7day = compared_data["7day"]["income"]
+income_7day_ly = compared_data["last_year_7day"]["income"]
+
+income_this_month = compared_data["thismonth"]["income"]
+income_this_month_ly = compared_data["last_year_thismonth"]["income"]
 
 # active users
 dau_today = compared_data["today"]["dau"]
@@ -145,23 +205,26 @@ order_user_15day_ly = compared_data["lastyear"]["order_from_user"]
 
 # endregion
 st.write("> 营收")
-
-
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4,col5 = st.columns(5)
 col1.metric(
     "当日", f"{income_today}", f"{get_rate_of_chage(income_today,income_today_ly)}"
 )
 col2.metric(
-    "近15天",
-    f"{income_15_days}",
-    f"{get_rate_of_chage(income_15_days,income_15_days_ly)}",
+    "近7天",
+    f"{income_7day}",
+    f"{get_rate_of_chage(income_7day,income_7day_ly)}",
 )
 col3.metric(
-    "当年(对比去年同期)",
+    "本月(对比去年同期)",
+    f"{income_this_month}",
+    f"{get_rate_of_chage(income_this_month,income_this_month_ly)}",
+)
+col4.metric(
+    "本年度(对比去年同期)",
     f"{income_this_year}",
     f"{get_rate_of_chage(income_this_year,income_last_year)}",
 )
-col4.metric("当年完成去年全年", f"{float2percentage(income_this_year/income_last_whole_year)}")
+col5.metric("今年完成去年全年", f"{float2percentage(income_this_year/income_last_whole_year)}")
 
 # st.subheader("用户活跃")
 # st.text("由于活跃用户数据")
@@ -298,13 +361,92 @@ s3.metric(
 
 )
 
-
+#######￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥
 # 用户预警
 st.divider()
 st.subheader("预警提示")
 st.text("TBC")
 
-# 综合
+#################################################
+# 用户预警
+st.divider()
+st.subheader("用户行为分析")
+st.write("> 用户转化周期,样本为2021-12-17开始收费后注册的新用户")
+
+@st.cache_data
+@db_session
+def get_trans_period_data():
+    data = {}
+    
+    # find paid user 
+    u = distinct(o.user for o in Order if o.status == "done")
+    # find user create time after 2021-12-17
+    start_pay_date = str(date2stamp(datetime(2021,12,17,0,0,0)))
+    npu = select(a for a in u if a.create_at >= start_pay_date)
+    
+    d_order = []
+    d_pay = []
+    
+    for i in npu:
+        create_date = stamp2data1000(i.create_at)
+        
+        order_date = select(o.create_at for o in Order if o.user==i).min()
+        order_date = stamp2data1000(order_date)
+        
+        pay_date = select(o.create_at for o in Order if o.user==i and o.status=="done").min()
+        pay_date = stamp2data1000(pay_date)
+        
+        o_p = order_date - create_date
+        p_p = pay_date - create_date
+        
+        d_order.append(o_p.days)
+        d_pay.append(p_p.days)
+    
+    data['order']={}
+    data['order']['min'] = min(d_order)
+    data['order']['max'] = max(d_order)
+    data['order']['mean'] = your_float(mean(d_order))
+    data['order']['stdev'] = your_float(pstdev(d_order))
+    
+    data['pay']={}
+    data['pay']['min'] = min(d_pay)
+    data['pay']['max'] = max(d_pay)
+    data['pay']['mean'] = your_float(mean(d_pay))
+    data['pay']['stdev'] = your_float(pstdev(d_pay))
+    
+    return data
+        
+    # find user 
+
+trans_data = get_trans_period_data()
+st.divider()
+st.write("下单, 单位：天")
+t1,t2,t3,t4 = st.columns(4)
+t1.metric("最快",f"{trans_data['order']['min']}")
+t2.metric("最慢",f"{trans_data['order']['max']}")
+t3.metric("平均",f"{trans_data['order']['mean']}")
+t4.metric("标准差",f"{trans_data['order']['stdev']}")
+
+st.divider()
+st.write("支付, 单位：天")
+p1,p2,p3,p4 = st.columns(4)
+p1.metric("最快",f"{trans_data['pay']['min']}")
+p2.metric("最慢",f"{trans_data['pay']['max']}")
+p3.metric("平均",f"{trans_data['pay']['mean']}")
+p4.metric("标准差",f"{trans_data['pay']['stdev']}")
+
+st.divider()
+st.write("> 用户召回")
+
+st.divider()
+st.write("过期VIP用户召回")
+
+
+st.divider()
+st.write("即将到期VIP促销")
+
+
+# 综合￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥￥
 st.divider()
 st.subheader("分项详情")
 
