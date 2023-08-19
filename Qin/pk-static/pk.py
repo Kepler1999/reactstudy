@@ -84,10 +84,6 @@ from pony.orm import *
 
 db = Database()
 # db.bind(provider="sqlite", filename=r"C:\Users\liang\Desktop\Repo\pk.sqlite", create_db=True)
-# db.bind(provider='postgres', user='', password='', host='', database='')
-db.bind(provider='mysql', host='120.46.203.252', user='root', passwd='tang0829', port=3306, db='pktml')
-# db.bind(provider='mysql', host='172.17.1.120',port=6020, user='testpaike', passwd='ZRygXrZMX2Xchtj',db='testpaike')
-# db.bind(provider='mysql', host='rm-cn-nwy3cr6r4000yfco.rwlb.rds.aliyuncs.com',port=3306, user='xysjn', passwd='Sjn199@166',db='db2023')
 
 class School(db.Entity):
     _table_ = "tml_school"
